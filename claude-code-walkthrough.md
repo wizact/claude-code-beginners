@@ -781,3 +781,13 @@ As you explore Claude Code, consider:
 5. How can you structure work to leverage Plan Mode effectively?
 
 **Remember:** Claude Code is a tool to augment your team, not replace human judgment. Use it to speed up implementation, but maintain oversight and decision-making authority.
+
+---
+
+## Homework
+
+To learn more and practice with Claude Code, explore this interactive guide:
+
+**[Claude Code for Product Managers](https://ccforpms.com/)**
+
+This resource provides hands-on exercises and real-world scenarios tailored for product owners and non-technical users.
