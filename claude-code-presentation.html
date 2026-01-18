@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude Code Walkthrough - Product Owners</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            overflow: hidden;
+        }
+
+        .presentation {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        .slide {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 4rem;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .slide.active {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .slide.prev {
+            transform: translateX(-100%);
+        }
+
+        h1 {
+            font-size: 4rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            text-align: center;
+            line-height: 1.2;
+        }
+
+        h2 {
+            font-size: 2.5rem;
+            font-weight: 600;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        h3 {
+            font-size: 1.8rem;
+            font-weight: 500;
+            margin-bottom: 1.5rem;
+            opacity: 0.9;
+        }
+
+        p {
+            font-size: 1.3rem;
+            line-height: 1.8;
+            max-width: 900px;
+            text-align: center;
+            opacity: 0.95;
+        }
+
+        ul {
+            list-style: none;
+            font-size: 1.4rem;
+            max-width: 1000px;
+            width: 100%;
+        }
+
+        li {
+            padding: 0.8rem 0;
+            padding-left: 2rem;
+            position: relative;
+            opacity: 0.95;
+            line-height: 1.6;
+        }
+
+        li::before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+            color: #ffd700;
+        }
+
+        .highlight {
+            color: #ffd700;
+            font-weight: 600;
+        }
+
+        .code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 0.3rem 0.6rem;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 1.2rem;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .card p, .card li {
+            font-size: 1.1rem;
+        }
+
+        .controls {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            display: flex;
+            gap: 1rem;
+            z-index: 1000;
+        }
+
+        button {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        button:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .progress {
+            position: fixed;
+            bottom: 2rem;
+            left: 2rem;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+
+        .subtitle {
+            font-size: 1.5rem;
+            opacity: 0.8;
+            margin-top: 0.5rem;
+        }
+
+        .emoji {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 2.5rem; }
+            h2 { font-size: 1.8rem; }
+            h3 { font-size: 1.4rem; }
+            p, li { font-size: 1.1rem; }
+            .grid-2, .grid-3 { grid-template-columns: 1fr; }
+            .slide { padding: 2rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="presentation">
+        <!-- Slide 1: Title -->
+        <div class="slide active" data-slide="1">
+            <h1>Claude Code Walkthrough</h1>
+            <p class="subtitle">For Product Owners</p>
+            <p style="margin-top: 2rem; opacity: 0.7;">Press → to continue</p>
+        </div>
+
+        <!-- Slide 2: What is Claude Code -->
+        <div class="slide" data-slide="2">
+            <div class="emoji">🤖</div>
+            <h2>What is Claude Code?</h2>
+            <p style="margin-bottom: 2rem;">AI coding assistant that works directly in the terminal</p>
+            <div class="card" style="max-width: 900px; margin-bottom: 2rem; background: rgba(255, 215, 0, 0.15);">
+                <p style="font-size: 1.2rem;"><span class="highlight">Growing Trend:</span> Non-developers (POs, designers, analysts) are using Claude Code and Cursor to automate daily tasks!</p>
+            </div>
+            <div class="grid-2" style="max-width: 1000px;">
+                <div>
+                    <h3 style="font-size: 1.3rem; margin-bottom: 1rem;">For Engineers</h3>
+                    <ul style="font-size: 1.1rem;">
+                        <li>Write & review code</li>
+                        <li>Fix bugs, refactor</li>
+                        <li>Build features</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 style="font-size: 1.3rem; margin-bottom: 1rem;">For Non-Developers</h3>
+                    <ul style="font-size: 1.1rem;">
+                        <li>Automate data tasks</li>
+                        <li>Generate reports</li>
+                        <li>Build simple tools</li>
+                        <li>Create prototypes</li>
+                    </ul>
+                </div>
+            </div>
+            <p style="margin-top: 2rem; font-style: italic; opacity: 0.8;">The barrier to automation is lower than ever</p>
+        </div>
+
+        <!-- Slide 3: Models -->
+        <div class="slide" data-slide="3">
+            <h2>Choosing the Right Model</h2>
+            <div class="grid-3">
+                <div class="card">
+                    <h3>⚡ Haiku</h3>
+                    <p style="margin-bottom: 1rem;"><span class="highlight">Fast & Cost-effective</span></p>
+                    <ul>
+                        <li>Quick edits</li>
+                        <li>Simple questions</li>
+                        <li>Routine tasks</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>🎯 Sonnet</h3>
+                    <p style="margin-bottom: 1rem;"><span class="highlight">Balanced (Default)</span></p>
+                    <ul>
+                        <li>Feature development</li>
+                        <li>Bug fixes</li>
+                        <li>Code reviews</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>🧠 Opus</h3>
+                    <p style="margin-bottom: 1rem;"><span class="highlight">Most Capable</span></p>
+                    <ul>
+                        <li>Architecture decisions</li>
+                        <li>Complex refactoring</li>
+                        <li>Critical features</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 4: Modes -->
+        <div class="slide" data-slide="4">
+            <h2>Three Working Modes</h2>
+            <div class="grid-3">
+                <div class="card">
+                    <h3>✏️ Edit Mode</h3>
+                    <p>Default working mode - Claude reads, writes, and modifies code files</p>
+                </div>
+                <div class="card">
+                    <h3>✅ Accept Edit Mode</h3>
+                    <p>Review changes before applying - you maintain control</p>
+                </div>
+                <div class="card">
+                    <h3>📋 Plan Mode</h3>
+                    <p>Creates detailed plans for large tasks - get approval before coding</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 5: Essential Commands -->
+        <div class="slide" data-slide="5">
+            <h2>Essential Commands</h2>
+            <div class="grid-2">
+                <div>
+                    <h3>Quick Actions</h3>
+                    <ul>
+                        <li><span class="code">Shift+?</span> - Cheatsheet</li>
+                        <li><span class="code">@filename</span> - Reference files</li>
+                        <li><span class="code">/</span> - Command panel</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3>Context Management</h3>
+                    <ul>
+                        <li><span class="code">/context</span> - See what Claude knows</li>
+                        <li><span class="code">/compact</span> - Compress history</li>
+                        <li><span class="code">/clear</span> - Fresh start</li>
+                        <li><span class="code">/rewind</span> - Undo changes</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card" style="max-width: 900px; margin-top: 2rem;">
+                <h3>Custom Commands</h3>
+                <p style="margin-bottom: 1rem;">Teams can create their own commands for workflows</p>
+                <p style="font-size: 1.1rem;"><span class="code">/wizact-dev-essentials:commit-message</span> - Generate standardized commit messages</p>
+            </div>
+        </div>
+
+        <!-- Slide 6: Context Window -->
+        <div class="slide" data-slide="6">
+            <div class="emoji">🧠</div>
+            <h2>Context Window</h2>
+            <p style="margin-bottom: 2rem;">Claude's "working memory" - the information it can actively think about</p>
+            <ul>
+                <li><span class="highlight">Like desk space</span> - finite but large</li>
+                <li><span class="highlight">"Forgot the middle" problem</span> - long conversations lose detail</li>
+                <li><span class="highlight">Solution:</span> Use <span class="code">/compact</span> or <span class="code">/clear</span> regularly</li>
+                <li>Reference files with <span class="code">@</span> instead of pasting code</li>
+            </ul>
+        </div>
+
+        <!-- Slide 7: Memory -->
+        <div class="slide" data-slide="7">
+            <h2>Two Types of Memory</h2>
+            <div class="grid-2">
+                <div class="card">
+                    <h3>📄 CLAUDE.md</h3>
+                    <p style="margin-bottom: 1rem;"><span class="highlight">Long-term</span> (Permanent)</p>
+                    <ul>
+                        <li>Team standards</li>
+                        <li>Product terminology</li>
+                        <li>User personas</li>
+                        <li>Testing requirements</li>
+                        <li>Business rules</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>🔖 # (Hashtag)</h3>
+                    <p style="margin-bottom: 1rem;"><span class="highlight">Session-based</span> (Temporary)</p>
+                    <ul>
+                        <li>Conversation summaries</li>
+                        <li>Continue previous work</li>
+                        <li>Share context with team</li>
+                        <li>Workflow continuity</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 8: Why POs Care About CLAUDE.md -->
+        <div class="slide" data-slide="8">
+            <h2>Why CLAUDE.md Matters to You</h2>
+            <p style="margin-bottom: 2rem;">Encode product knowledge into development workflow</p>
+            <div class="grid-2">
+                <div class="card">
+                    <h3>Product Context</h3>
+                    <ul>
+                        <li>Define domain terms</li>
+                        <li>Document user personas</li>
+                        <li>Specify business rules</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>Quality Gates</h3>
+                    <ul>
+                        <li>Testing requirements</li>
+                        <li>Critical verification areas</li>
+                        <li>Compliance rules</li>
+                    </ul>
+                </div>
+            </div>
+            <p style="margin-top: 2rem; font-size: 1.1rem;">Example: "Payment features require integration tests + manual QA sign-off"</p>
+        </div>
+
+        <!-- Slide 9: Agents -->
+        <div class="slide" data-slide="9">
+            <h2>Agents: AI Specialists</h2>
+            <p style="margin-bottom: 2rem;">Autonomous workers that handle complex tasks</p>
+            <div class="grid-3">
+                <div class="card">
+                    <h3>🔧 General</h3>
+                    <p>Complex multi-step tasks, full autonomy</p>
+                </div>
+                <div class="card">
+                    <h3>🔍 Explore</h3>
+                    <p>Read-only deep dives into architecture</p>
+                </div>
+                <div class="card">
+                    <h3>📝 Plan</h3>
+                    <p>Breaks large work into iterative phases</p>
+                </div>
+            </div>
+            <p style="margin-top: 2rem;">Custom agents can encode team workflows (e.g., SpecBuilder)</p>
+        </div>
+
+        <!-- Slide 10: Demo - Explore Business Logic -->
+        <div class="slide" data-slide="10">
+            <h2>Demo: Understanding Business Logic</h2>
+            <div class="emoji">🔍</div>
+            <div class="card" style="max-width: 900px; text-align: left;">
+                <h3 style="text-align: center; margin-bottom: 1.5rem;">Using Explore Agent</h3>
+                <p style="margin-bottom: 1.5rem; text-align: center; font-size: 1.2rem;">
+                    <span class="highlight">Question:</span> "How does the order processing system work from cart to fulfillment?"
+                </p>
+                <ul>
+                    <li>Explore agent searches for order-related code</li>
+                    <li>Traces flow through services and components</li>
+                    <li>Maps database interactions and API calls</li>
+                    <li>Identifies integration points with payment/shipping</li>
+                    <li>Explains complete workflow in plain language</li>
+                </ul>
+                <p style="margin-top: 1.5rem; text-align: center; font-style: italic; opacity: 0.8;">Read-only: No code changes, just deep understanding</p>
+            </div>
+        </div>
+
+        <!-- Slide 11: Skills -->
+        <div class="slide" data-slide="11">
+            <h2>Skills: Expert Tools</h2>
+            <div class="emoji">🛠️</div>
+            <p style="margin-bottom: 2rem;">Pre-built workflows for specific tasks</p>
+            <div class="card" style="max-width: 900px;">
+                <h3>Example: Frontend Skill</h3>
+                <p style="margin-bottom: 1rem; font-size: 1.2rem;">
+                    <span class="code">Use frontend</span> skill to create a product card component with image, title, price, and add-to-cart button
+                </p>
+                <ul>
+                    <li>Complete component structure generated automatically</li>
+                    <li>Responsive design + accessibility built-in</li>
+                    <li>State management included</li>
+                    <li>Follows team's design system</li>
+                </ul>
+                <p style="margin-top: 1rem; font-style: italic; opacity: 0.8;">Invoke with <span class="code">frontend (name of the skill)</span> to use this skill</p>
+            </div>
+        </div>
+
+        <!-- Slide 12: Image Support -->
+        <div class="slide" data-slide="12">
+            <h2>Visual Input: Paste Images</h2>
+            <div class="emoji">🖼️</div>
+            <p style="margin-bottom: 2rem;">Claude Code understands images - just paste them in the prompt!</p>
+            <div class="card" style="max-width: 900px;">
+                <h3 style="margin-bottom: 1.5rem;">Example Use Cases</h3>
+                <ul>
+                    <li><span class="highlight">Design mockups:</span> "Build this UI design" + paste screenshot</li>
+                    <li><span class="highlight">Error screenshots:</span> "Fix this error" + paste error message</li>
+                    <li><span class="highlight">Data tables:</span> "Convert this table to CSV" + paste image</li>
+                    <li><span class="highlight">Wireframes:</span> "Implement this layout" + paste sketch</li>
+                </ul>
+                <p style="margin-top: 1.5rem; text-align: center; font-style: italic;">No need to describe - just show!</p>
+            </div>
+        </div>
+
+        <!-- Slide 13: MCP -->
+        <div class="slide" data-slide="13">
+            <h2>MCP: Model Context Protocol</h2>
+            <p style="margin-bottom: 2rem;">Connect Claude to external services and tools</p>
+            <div class="grid-3">
+                <div class="card">
+                    <h3>📐 Figma</h3>
+                    <p>Read designs, extract specs, generate code</p>
+                </div>
+                <div class="card">
+                    <h3>📊 Jira</h3>
+                    <p>Create tickets, link changes, track work</p>
+                </div>
+                <div class="card">
+                    <h3>🌐 Browser</h3>
+                    <p>Navigate sites, analyze UI, build prototypes</p>
+                </div>
+            </div>
+            <p style="margin-top: 2rem; font-size: 1.1rem;">Build custom MCPs for customer features (e.g., Trade Me Search MCP)</p>
+        </div>
+
+        <!-- Slide 14: Demo - Trade Me Prototype -->
+        <div class="slide" data-slide="14">
+            <h2>Demo: Build Trade Me Prototype</h2>
+            <div class="card" style="max-width: 900px; text-align: left;">
+                <h3 style="text-align: center; margin-bottom: 1.5rem;">Using Chrome DevTools MCP</h3>
+                <ul>
+                    <li>Navigate to trademe.co.nz</li>
+                    <li>Take screenshots and analyze layout</li>
+                    <li>Extract color scheme and typography</li>
+                    <li>Identify components (search, filters, listing cards)</li>
+                    <li>Generate matching HTML/CSS prototype</li>
+                    <li>Result: Functional prototype in minutes</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Slide 15: Workflow Example -->
+        <div class="slide" data-slide="15">
+            <h2>Typical Workflow</h2>
+            <div class="card" style="max-width: 900px; text-align: left;">
+                <ul style="font-size: 1.2rem;">
+                    <li><span class="highlight">1.</span> Request: "Add payment processing feature"</li>
+                    <li><span class="highlight">2.</span> Claude enters Plan Mode → creates implementation plan</li>
+                    <li><span class="highlight">3.</span> You approve plan</li>
+                    <li><span class="highlight">4.</span> Agents work in parallel (backend, frontend, tests)</li>
+                    <li><span class="highlight">5.</span> Uses skills, MCP, CLAUDE.md throughout</li>
+                    <li><span class="highlight">6.</span> You review in Accept Edit Mode</li>
+                    <li><span class="highlight">7.</span> Commit created, PR opened</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Slide 16: Comparison Table -->
+        <div class="slide" data-slide="16">
+            <h2>Agents vs Skills vs Commands</h2>
+            <div style="max-width: 1100px; overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); border-radius: 12px; overflow: hidden;">
+                    <thead>
+                        <tr style="background: rgba(255, 255, 255, 0.2);">
+                            <th style="padding: 1.2rem; text-align: left; font-size: 1.2rem; border-bottom: 2px solid rgba(255, 255, 255, 0.3);">Feature</th>
+                            <th style="padding: 1.2rem; text-align: left; font-size: 1.2rem; border-bottom: 2px solid rgba(255, 255, 255, 0.3);">Agents</th>
+                            <th style="padding: 1.2rem; text-align: left; font-size: 1.2rem; border-bottom: 2px solid rgba(255, 255, 255, 0.3);">Skills</th>
+                            <th style="padding: 1.2rem; text-align: left; font-size: 1.2rem; border-bottom: 2px solid rgba(255, 255, 255, 0.3);">Commands</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style="padding: 1rem; border-bottom: 1px solid rgba(255, 255, 255, 0.1); font-weight: 600;">Purpose</td>
+                            <td style="padding: 1rem; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Complex autonomous tasks</td>
+                            <td style="padding: 1rem; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Focused workflows</td>
+                            <td style="padding: 1rem; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Control Claude Code</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 1rem; border-bottom: 1px solid rgba(255, 255, 255, 0.1); font-weight: 600;">Autonomy</td>
+                            <td style="padding: 1rem; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">High - explores & plans</td>
+                            <td style="padding: 1rem; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Medium - executes workflow</td>
+                            <td style="padding: 1rem; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Low - immediate action</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 1rem; border-bottom: 1px solid rgba(255, 255, 255, 0.1); font-weight: 600;">Invocation</td>
+                            <td style="padding: 1rem; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Automatic or <span class="code">/agents</span></td>
+                            <td style="padding: 1rem; border-bottom: 1px solid rgba(255, 255, 255, 0.1);"><span class="code">skill-name</span></td>
+                            <td style="padding: 1rem; border-bottom: 1px solid rgba(255, 255, 255, 0.1);"><span class="code">/command-name</span></td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 1rem; border-bottom: 1px solid rgba(255, 255, 255, 0.1); font-weight: 600;">Examples</td>
+                            <td style="padding: 1rem; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Explore, Plan, General</td>
+                            <td style="padding: 1rem; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">frontend, ripgrep</td>
+                            <td style="padding: 1rem; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">clear, compact, rewind</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 1rem; font-weight: 600;">Use When</td>
+                            <td style="padding: 1rem;">Multi-step, open-ended tasks</td>
+                            <td style="padding: 1rem;">Specific, repeated workflows</td>
+                            <td style="padding: 1rem;">Managing session state</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Slide 17: Best Practices -->
+        <div class="slide" data-slide="17">
+            <h2>Best Practices for Product Owners</h2>
+            <div class="grid-2">
+                <div class="card">
+                    <h3>Start Well</h3>
+                    <ul>
+                        <li>Reference files with <span class="code">@</span></li>
+                        <li>Include acceptance criteria</li>
+                        <li>Link to designs/tickets</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>Manage Context</h3>
+                    <ul>
+                        <li>Use <span class="code">/compact</span> regularly</li>
+                        <li>Document in CLAUDE.md</li>
+                        <li>Use <span class="code">#</span> for continuity</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="grid-2" style="margin-top: 1.5rem;">
+                <div class="card">
+                    <h3>Leverage Tools</h3>
+                    <ul>
+                        <li>Explore agent for "how does X work?"</li>
+                        <li>Plan agent for large features</li>
+                        <li>Skills for common tasks</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>Build Knowledge</h3>
+                    <ul>
+                        <li>Update CLAUDE.md regularly</li>
+                        <li>Create custom agents/skills</li>
+                        <li>Share useful MCPs</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 18: Key Takeaways -->
+        <div class="slide" data-slide="18">
+            <h2>Key Takeaways</h2>
+            <div class="emoji">💡</div>
+            <ul style="max-width: 900px;">
+                <li><span class="highlight">Speed:</span> Faster iteration without sacrificing quality</li>
+                <li><span class="highlight">Consistency:</span> CLAUDE.md ensures standards are followed</li>
+                <li><span class="highlight">Integration:</span> Works with your existing tools (Figma, Jira, etc.)</li>
+                <li><span class="highlight">Control:</span> You review and approve all changes</li>
+                <li><span class="highlight">Context:</span> Product knowledge embedded in workflow</li>
+                <li><span class="highlight">Accessibility:</span> Non-developers can automate tasks too</li>
+            </ul>
+            <p style="margin-top: 2rem; font-style: italic;">Claude Code augments your team, not replaces human judgment</p>
+        </div>
+
+        <!-- Slide 19: Questions -->
+        <div class="slide" data-slide="19">
+            <div class="emoji">❓</div>
+            <h2>Questions?</h2>
+            <p style="margin-top: 2rem; font-size: 1.5rem;">Let's discuss how Claude Code can help your team</p>
+        </div>
+    </div>
+
+    <div class="progress">
+        <span id="current-slide">1</span> / <span id="total-slides">19</span>
+    </div>
+
+    <div class="controls">
+        <button id="prev-btn">← Previous</button>
+        <button id="next-btn">Next →</button>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const currentSlideEl = document.getElementById('current-slide');
+
+        function updateSlide() {
+            slides.forEach((slide, index) => {
+                slide.classList.remove('active', 'prev');
+                if (index === currentSlide) {
+                    slide.classList.add('active');
+                } else if (index < currentSlide) {
+                    slide.classList.add('prev');
+                }
+            });
+
+            currentSlideEl.textContent = currentSlide + 1;
+            prevBtn.disabled = currentSlide === 0;
+            nextBtn.disabled = currentSlide === totalSlides - 1;
+        }
+
+        function nextSlide() {
+            if (currentSlide < totalSlides - 1) {
+                currentSlide++;
+                updateSlide();
+            }
+        }
+
+        function prevSlide() {
+            if (currentSlide > 0) {
+                currentSlide--;
+                updateSlide();
+            }
+        }
+
+        nextBtn.addEventListener('click', nextSlide);
+        prevBtn.addEventListener('click', prevSlide);
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                e.preventDefault();
+                nextSlide();
+            } else if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                prevSlide();
+            }
+        });
+
+        // Initialize
+        document.getElementById('total-slides').textContent = totalSlides;
+        updateSlide();
+    </script>
+</body>
+</html>
